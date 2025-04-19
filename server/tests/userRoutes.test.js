@@ -23,6 +23,7 @@ describe("User Routes", () => {
       name: "Test User",
       email: "test@example.com",
       password: "123456",
+      userName: "testuser123", // Add this line
     });
 
     expect(res.statusCode).toBe(201);
