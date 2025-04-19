@@ -16,19 +16,18 @@ const generateToken = (id) => {
 
 // Test admin user
 const adminUser = {
-  name: "Admin User",
-  email: "admin@example.com",
+  name: "Admin User Product",
+  email: "admin_product@example.com",
   password: "123456",
-  userName: "adminuser",
+  userName: "adminuser_product",
   isAdmin: true,
 };
 
-// Test normal user
 const regularUser = {
-  name: "Regular User",
-  email: "user@example.com",
+  name: "Regular User Product",
+  email: "user_product@example.com",
   password: "123456",
-  userName: "regularuser",
+  userName: "regularuser_product",
   isAdmin: false,
 };
 
