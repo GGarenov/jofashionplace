@@ -32,6 +32,18 @@ router.get("/profile", protect, getUserProfile);
 // @access  Private
 router.put("/profile", protect, updateUserProfile);
 
+// @desc    Get all users (Admin only)
+// @route   GET /api/users
+// @access  Private/Admin
+router.get("/", protect, admin, async (req, res) => {
+  try {
+    const users = await User.find({});
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // @desc    Delete user (admin only)
 // @route   DELETE /api/users/:id
 // @access  Private/Admin

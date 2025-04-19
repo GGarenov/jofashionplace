@@ -70,12 +70,14 @@ const authUser = async (req, res) => {
       name: user.name,
       email: user.email,
       userName: user.userName,
+      isAdmin: user.isAdmin,
       token,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
+  console.log("Logged in user:", user);
 };
 
 // Get user profile
