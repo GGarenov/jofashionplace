@@ -1,5 +1,21 @@
 const mongoose = require("mongoose");
 
+const reviewSchema = mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    rating: { type: Number, required: true },
+    comment: { type: String, required: true },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
 const productSchema = mongoose.Schema(
   {
     user: {
@@ -27,18 +43,7 @@ const productSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    reviews: [
-      {
-        name: { type: String, required: true },
-        rating: { type: Number, required: true },
-        comment: { type: String, required: true },
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          required: true,
-          ref: "User",
-        },
-      },
-    ],
+    reviews: [reviewSchema],
     rating: {
       type: Number,
       required: true,
@@ -58,6 +63,25 @@ const productSchema = mongoose.Schema(
       type: Number,
       required: true,
       default: 0,
+    },
+    // Additional fields for sunglasses
+    frameType: {
+      type: String,
+      required: false,
+    },
+    lensType: {
+      type: String,
+      required: false,
+    },
+    uvProtection: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    featured: {
+      type: Boolean,
+      required: false,
+      default: false,
     },
   },
   {

@@ -1,11 +1,16 @@
 const express = require("express");
 const router = express.Router();
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+const { protect, admin } = require("../middleware/authMiddleware");
 const {
-  authUser,
   registerUser,
+  authUser,
   getUserProfile,
+  updateUserProfile,
+  deleteUser,
 } = require("../controllers/userController");
-const { protect } = require("../middleware/authMiddleware");
 
 // @desc    Register a new user
 // @route   POST /api/users
@@ -21,5 +26,15 @@ router.post("/login", authUser);
 // @route   GET /api/users/profile
 // @access  Private
 router.get("/profile", protect, getUserProfile);
+
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+router.put("/profile", protect, updateUserProfile);
+
+// @desc    Delete user (admin only)
+// @route   DELETE /api/users/:id
+// @access  Private/Admin
+router.delete("/:id", protect, admin, deleteUser);
 
 module.exports = router;
