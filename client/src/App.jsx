@@ -61,7 +61,7 @@ function App() {
                 element={<PrivateRoute element={<OrderListPage />} />}
               />
               <Route
-                path="create"
+                path="product/create"
                 element={<PrivateRoute element={<CreateProductPage />} />}
               />
             </Route>

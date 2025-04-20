@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const path = require("path");
+const multer = require("multer");
 
 // Load env vars
 dotenv.config();
@@ -23,6 +24,7 @@ app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
+app.use("/api/upload", require("./routes/uploadRoutes"));
 
 // Basic route
 app.get("/", (req, res) => {
@@ -37,6 +39,16 @@ app.use((req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
+  // Check for multer errors
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      res.status(400);
+      return res.json({ message: "File too large. Max size is 5MB." });
+    }
+    res.status(400);
+    return res.json({ message: err.message });
+  }
+
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   res.status(statusCode);
   res.json({

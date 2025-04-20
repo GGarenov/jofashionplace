@@ -98,7 +98,7 @@ const CreateProductPage = () => {
 
       // Redirect after short delay
       setTimeout(() => {
-        navigate("/admin/productlist");
+        navigate("/admin/products");
       }, 2000);
     } catch (error) {
       setLoading(false);

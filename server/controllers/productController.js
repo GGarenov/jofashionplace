@@ -24,8 +24,19 @@ const getProductById = asyncHandler(async (req, res) => {
 });
 
 const createProduct = asyncHandler(async (req, res) => {
-  const { name, image, brand, category, description, price, countInStock } =
-    req.body;
+  const {
+    name,
+    image,
+    brand,
+    category,
+    description,
+    price,
+    countInStock,
+    frameType,
+    lensType,
+    uvProtection,
+    featured,
+  } = req.body;
 
   const productExists = await Product.findOne({ name });
 
@@ -43,6 +54,10 @@ const createProduct = asyncHandler(async (req, res) => {
     description,
     price,
     countInStock,
+    frameType: frameType || "",
+    lensType: lensType || "",
+    uvProtection: uvProtection || false,
+    featured: featured || false,
   });
 
   const createdProduct = await product.save();
@@ -53,8 +68,19 @@ const createProduct = asyncHandler(async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, image, brand, category, description, price, countInStock } =
-    req.body;
+  const {
+    name,
+    image,
+    brand,
+    category,
+    description,
+    price,
+    countInStock,
+    frameType,
+    lensType,
+    uvProtection,
+    featured,
+  } = req.body;
 
   const product = await Product.findById(req.params.id);
 
@@ -66,6 +92,12 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.description = description || product.description;
     product.price = price || product.price;
     product.countInStock = countInStock || product.countInStock;
+
+    // Only update these if they are explicitly provided
+    if (frameType !== undefined) product.frameType = frameType;
+    if (lensType !== undefined) product.lensType = lensType;
+    if (uvProtection !== undefined) product.uvProtection = uvProtection;
+    if (featured !== undefined) product.featured = featured;
 
     const updatedProduct = await product.save();
     res.json(updatedProduct);
