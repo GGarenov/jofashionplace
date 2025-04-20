@@ -53,9 +53,13 @@ const ProductPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <img
-              src={product.image}
+              src={
+                product.image.startsWith("http")
+                  ? product.image
+                  : `http://localhost:5000${product.image}`
+              }
               alt={product.name}
-              className="w-full rounded-lg shadow-md"
+              className="w-full h-auto max-h-[500px] object-contain"
             />
           </div>
 

@@ -6,7 +6,7 @@ const navItems = [
   { path: "/admin/users", label: "Users" },
   { path: "/admin/products", label: "Products" },
   { path: "/admin/orders", label: "Orders" },
-  { path: "/admin/create", label: "Create Product" },
+  { path: "/admin/product/create", label: "Create Product" },
 ];
 
 const AdminLayout = () => {

@@ -47,7 +47,11 @@ const HomePage = () => {
               >
                 <a href={`/product/${product._id}`}>
                   <img
-                    src={product.image}
+                    src={
+                      product.image.startsWith("http")
+                        ? product.image
+                        : `http://localhost:5000${product.image}`
+                    }
                     alt={product.name}
                     className="w-full h-64 object-cover"
                   />
