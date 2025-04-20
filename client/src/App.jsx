@@ -18,6 +18,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserListPage from "./pages/admin/UserListPage";
 import ProductListPage from "./pages/admin/ProductListPage";
 import OrderListPage from "./pages/admin/OrderListPage";
+import CreateProductPage from "./pages/admin/CreateProductPage";
 
 // PrivateRoute component
 import PrivateRoute from "./components/PrivateRoute";
@@ -58,6 +59,10 @@ function App() {
               <Route
                 path="orders"
                 element={<PrivateRoute element={<OrderListPage />} />}
+              />
+              <Route
+                path="create"
+                element={<PrivateRoute element={<CreateProductPage />} />}
               />
             </Route>
           </Routes>
