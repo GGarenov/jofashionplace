@@ -25,6 +25,7 @@ app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/upload", require("./routes/uploadRoutes"));
+app.use("/api/carts", require("./routes/cartRoutes"));
 
 // Basic route
 app.get("/", (req, res) => {

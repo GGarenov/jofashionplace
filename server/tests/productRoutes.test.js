@@ -4,6 +4,7 @@ const app = require("../server");
 const User = require("../models/User");
 const Product = require("../models/Product");
 const jwt = require("jsonwebtoken");
+const shortid = require("shortid");
 
 jest.setTimeout(15000);
 
@@ -49,6 +50,7 @@ let adminToken;
 let userToken;
 let productId;
 let adminId;
+let uniqueId = shortid.generate();
 
 beforeAll(async () => {
   await mongoose.connect(process.env.MONGO_URI);

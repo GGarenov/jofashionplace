@@ -3,6 +3,7 @@ const request = require("supertest");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const path = require("path");
+const shortid = require("shortid");
 
 // Load test environment variables
 dotenv.config({ path: path.resolve(__dirname, "../.env.test") });
@@ -18,8 +19,8 @@ describe("Order Controller", () => {
   let user;
   let adminUser;
   let testProduct;
+  let uniqueId = shortid.generate();
 
-  // Setup before all tests
   beforeAll(async () => {
     // Connect to the test database
     await mongoose.connect(process.env.MONGO_URI, {
@@ -29,10 +30,10 @@ describe("Order Controller", () => {
 
     // Create a test user
     user = await User.create({
-      name: "Test User",
-      email: "testuser@example.com",
+      name: `Test User ${uniqueId}`,
+      email: `test${uniqueId}@example.com`,
       password: "password123",
-      userName: "testuser",
+      userName: `testuser${uniqueId}`,
     });
 
     // Create an admin user
