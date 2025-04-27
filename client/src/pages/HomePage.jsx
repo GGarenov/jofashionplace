@@ -1,28 +1,56 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { fetchProducts } from "../features/products/productSlice";
+import { addToCart } from "../features/cart/cartSlice";
 
 const HomePage = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { products, loading, error } = useSelector((state) => state.products);
 
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
+  const handleAddToCart = (product) => {
+    // Add the first item to cart by default
+    dispatch(
+      addToCart({
+        id: product._id,
+        qty: 1,
+      })
+    );
+
+    // Optional: Show a notification or navigate to cart
+    // navigate('/cart');
+  };
+
   return (
     <div>
-      <div className="bg-blue-50 py-16 mb-10 rounded-lg shadow-inner">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold mb-4 text-gray-800">
-            Welcome to Jo Fashion Place
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover our exclusive collection of stylish sunglasses for every
-            occasion
-          </p>
+      {/* top */}
+      <div
+        className="flex flex-col gap-6 p-6 md:p-28 px-4
+       max-w-6xl mx-auto"
+      >
+        <h1 className="text-slate-700 font-bold text-3xl lg:text-6xl">
+          Discover your new <span className="text-slate-500">style</span>
+          <br />
+          and express your true self
+        </h1>
+        <div className="text-gray-400 text-xs sm:text-xl">
+          Explore the latest trends and timeless classics at Garenov Apparel.
+          <br />
+          Find the perfect outfits that match your unique style.
         </div>
+        <Link
+          to={"/"}
+          className="text-xl sm:text-xl text-blue-800 font-bold hover:underline"
+        >
+          Search Now..
+        </Link>
       </div>
 
       <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
@@ -84,6 +112,7 @@ const HomePage = () => {
                     ${product.price?.toFixed(2)}
                   </p>
                   <button
+                    onClick={() => handleAddToCart(product)}
                     className="mt-3 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-300 disabled:cursor-not-allowed"
                     disabled={product.countInStock === 0}
                   >

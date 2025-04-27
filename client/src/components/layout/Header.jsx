@@ -15,13 +15,13 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-gray-800 text-white py-4 shadow-md">
-      <div className="container mx-auto px-4 flex justify-between items-center">
-        <Link
-          to="/"
-          className="text-2xl font-bold hover:text-blue-300 transition-colors"
-        >
-          Jo Fashion Place
+    <header className="bg-slate-200 shadow-md">
+      <div className="flex justify-between items-center max-w-6xl mx-auto p-3">
+        <Link to="/">
+          <h1 className="font-bold text-sm sm:text-xl flex flex-wrap">
+            <span className="text-slate-500">Jo Fashion</span>
+            <span className="text-slate-700">Real Estate</span>
+          </h1>
         </Link>
         <nav>
           <ul className="flex space-x-6 items-center">
