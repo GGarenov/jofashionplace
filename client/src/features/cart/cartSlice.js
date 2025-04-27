@@ -17,36 +17,69 @@ const paymentMethod = localStorage.getItem("paymentMethod")
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
   async ({ id, qty }, { getState }) => {
-    const { data } = await axios.get(`/api/products/${id}`);
+    try {
+      const { data } = await axios.get(`/api/products/${id}`);
 
-    const item = {
-      product: data._id,
-      name: data.name,
-      image: data.image,
-      price: data.price,
-      countInStock: data.countInStock,
-      qty,
-    };
+      // Add comprehensive null checks
+      if (!data) {
+        throw new Error("No product data received");
+      }
 
-    const result = { item, qty };
+      // Ensure image is handled safely
+      const imageUrl = data.image
+        ? data.image.startsWith("http")
+          ? data.image
+          : `http://localhost:5000${data.image}`
+        : "/placeholder-image.png"; // Fallback image
 
-    // Update localStorage
-    const { cart } = getState();
-    const updatedCartItems = [...cart.cartItems];
+      const item = {
+        product: data._id,
+        name: data.name || "Unnamed Product",
+        image: imageUrl,
+        price: data.price || 0,
+        countInStock: data.countInStock || 0,
+        qty: Math.min(qty, data.countInStock || 1), // Ensure qty doesn't exceed stock
+      };
 
-    const existItemIndex = updatedCartItems.findIndex(
-      (x) => x.product === item.product
-    );
+      const result = { item, qty: item.qty };
 
-    if (existItemIndex >= 0) {
-      updatedCartItems[existItemIndex] = item;
-    } else {
-      updatedCartItems.push(item);
+      // Update localStorage
+      const { cart } = getState();
+      const updatedCartItems = [...cart.cartItems];
+
+      const existItemIndex = updatedCartItems.findIndex(
+        (x) => x.product === item.product
+      );
+
+      if (existItemIndex >= 0) {
+        // Update existing item
+        updatedCartItems[existItemIndex] = item;
+      } else {
+        // Add new item
+        updatedCartItems.push(item);
+      }
+
+      localStorage.setItem("cartItems", JSON.stringify(updatedCartItems));
+
+      return result;
+    } catch (error) {
+      console.error("Detailed error adding to cart:", error);
+
+      // Provide more context about the error
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        console.error("Server responded with:", error.response.data);
+        console.error("Status code:", error.response.status);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error("No response received:", error.request);
+      } else {
+        // Something happened in setting up the request
+        console.error("Error setting up request:", error.message);
+      }
+
+      throw error;
     }
-
-    localStorage.setItem("cartItems", JSON.stringify(updatedCartItems));
-
-    return result;
   }
 );
 
@@ -88,8 +121,10 @@ const cartSlice = createSlice({
       );
 
       if (existItemIndex >= 0) {
+        // Update existing item
         state.cartItems[existItemIndex] = item;
       } else {
+        // Add new item
         state.cartItems.push(item);
       }
     });

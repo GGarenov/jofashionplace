@@ -12,3 +12,5 @@ export const store = configureStore({
     orders: orderReducer,
   },
 });
+
+export default store;
