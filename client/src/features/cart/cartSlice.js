@@ -16,16 +16,16 @@ const initialState = {
 export const getCart = createAsyncThunk(
   "cart/getCart",
   async (userId, { getState, rejectWithValue }) => {
-    const token = getState().auth.token; // Get token from auth state or localStorage
+    const token = getState().auth.userInfo?.token; // Changed from state.auth to state.auth.userInfo
     try {
       const response = await axios.get(`${API_URL}/api/carts/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      return response.data; // Return data (cart items and total price)
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data.message); // If error, return the error message
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -54,16 +54,33 @@ export const addToCart = createAsyncThunk(
 
 export const removeItem = createAsyncThunk(
   "cart/removeItem",
-  async ({ userId, itemId, token }, { rejectWithValue }) => {
+  async ({ userId, itemId }, thunkAPI) => {
     try {
+      const state = thunkAPI.getState();
+      const token = state.auth.userInfo?.token; // Changed from state.user to state.auth
+
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
       await axios.delete(`${API_URL}/api/carts/${userId}/items/${itemId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      return itemId; // Return itemId for removal
+      return itemId; // Return the itemId to remove it from the state
     } catch (error) {
-      return rejectWithValue(error.response.data.message);
+      console.error("Remove item error:", error);
+
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        return thunkAPI.rejectWithValue(error.response.data.message);
+      }
+
+      return thunkAPI.rejectWithValue(error.message || "Failed to remove item");
     }
   }
 );
