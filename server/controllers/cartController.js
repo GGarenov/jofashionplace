@@ -131,17 +131,23 @@ const removeItemFromCart = asyncHandler(async (req, res) => {
     (item) => item._id.toString() !== itemId
   );
 
-  // Update the cart items and recalculate the total price
+  // Update the cart items
   cart.cartItems = updatedCartItems;
-  cart.totalPrice = updatedCartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
 
-  // Save the updated cart
-  await cart.save();
+  if (updatedCartItems.length === 0) {
+    // If no items left, delete the entire cart
+    await Cart.deleteOne({ user: userId });
+    res.json({ message: "Cart is empty and has been deleted" });
+  } else {
+    // If still items left, update total price and save
+    cart.totalPrice = updatedCartItems.reduce(
+      (acc, item) => acc + item.price * item.quantity,
+      0
+    );
 
-  res.json(cart);
+    await cart.save();
+    res.json(cart);
+  }
 });
 
 // @desc    Clear all items in cart
@@ -150,7 +156,7 @@ const removeItemFromCart = asyncHandler(async (req, res) => {
 const clearCart = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
-  // Find the user's cart and remove all items
+  // Find the user's cart
   const cart = await Cart.findOne({ user: userId });
 
   if (!cart) {
@@ -158,14 +164,10 @@ const clearCart = asyncHandler(async (req, res) => {
     throw new Error("Cart not found");
   }
 
-  // Empty the cart
-  cart.cartItems = [];
-  cart.totalPrice = 0;
+  // Delete the cart entirely if it exists
+  await Cart.deleteOne({ user: userId });
 
-  // Save the empty cart
-  await cart.save();
-
-  res.json({ message: "Cart cleared" });
+  res.json({ message: "Cart cleared and deleted" });
 });
 
 module.exports = {

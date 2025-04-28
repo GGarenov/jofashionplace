@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import { clearCartItems } from "../cart/cartSlice";
+import { clearCart } from "../cart/cartSlice";
 
 // Get user from localStorage
 const userInfo = localStorage.getItem("userInfo")
@@ -67,7 +67,7 @@ export const logout = createAsyncThunk(
     localStorage.removeItem("paymentMethod");
 
     // Dispatch clear cart action
-    dispatch(clearCartItems());
+    dispatch(clearCart());
   }
 );
 

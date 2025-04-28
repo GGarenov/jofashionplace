@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../features/users/userSlice";
@@ -8,6 +8,7 @@ const Header = () => {
   const navigate = useNavigate();
   const { userInfo } = useSelector((state) => state.user);
   const { cartItems } = useSelector((state) => state.cart);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const logoutHandler = () => {
     dispatch(logout());
@@ -33,31 +34,47 @@ const Header = () => {
                 <i className="fas fa-shopping-cart mr-1"></i> Cart
                 {cartItems && cartItems.length > 0 && (
                   <span className="ml-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartItems.reduce((acc, item) => acc + (item.qty || 0), 0)}
+                    {cartItems.reduce(
+                      (acc, item) => acc + (item.quantity || 0),
+                      0
+                    )}
                   </span>
                 )}
               </Link>
             </li>
             {userInfo ? (
-              <li className="relative group">
-                <button className="flex items-center hover:text-blue-300 transition-colors">
+              <li className="relative">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center hover:text-blue-300 transition-colors"
+                >
                   <i className="fas fa-user mr-1"></i> {userInfo.name}{" "}
                   <i className="fas fa-caret-down ml-1"></i>
                 </button>
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden group-hover:block z-10">
-                  <Link
-                    to="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                {isDropdownOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10"
+                    // Prevent dropdown from closing when mouse enters
+                    onMouseEnter={(e) => e.stopPropagation()}
                   >
-                    Profile
-                  </Link>
-                  <button
-                    onClick={logoutHandler}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Logout
-                  </button>
-                </div>
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logoutHandler();
+                        setIsDropdownOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </li>
             ) : (
               <li>

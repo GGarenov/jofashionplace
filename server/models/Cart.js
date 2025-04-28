@@ -41,19 +41,15 @@ const cartSchema = mongoose.Schema(
     },
     cartItems: [cartItemSchema],
     shippingAddress: {
-      address: { type: String, required: false }, // Make these optional
-      city: { type: String, required: false }, // Make these optional
-      postalCode: { type: String, required: false }, // Make these optional
-      country: { type: String, required: false }, // Make these optional
+      address: { type: String, required: false },
+      city: { type: String, required: false },
+      postalCode: { type: String, required: false },
+      country: { type: String, required: false },
     },
     totalPrice: {
       type: Number,
       required: true,
       default: 0,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
     },
   },
   {

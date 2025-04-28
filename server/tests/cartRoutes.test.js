@@ -1,211 +1,220 @@
-// tests/cartRoutes.test.js
-
 const request = require("supertest");
-const app = require("../server");
-const Cart = require("../models/Cart");
-const User = require("../models/User");
-const Product = require("../models/Product");
-const generateToken = require("../utils/generateToken");
 const mongoose = require("mongoose");
-const shortid = require("shortid");
-
-let userToken;
-let user;
-let testProduct;
-let uniqueId = shortid.generate();
-
-beforeAll(async () => {
-  user = await User.create({
-    name: `Test User ${uniqueId}`,
-    email: `test${uniqueId}@example.com`,
-    password: "password123",
-    userName: `testuser${uniqueId}`,
-    isAdmin: false,
-  });
-
-  userToken = generateToken(user._id);
-
-  testProduct = await Product.create({
-    name: "Test Product",
-    price: 50,
-    image: "https://example.com/image.jpg",
-    description: "Test description",
-    brand: "Test Brand",
-    category: "Test Category",
-    countInStock: 10,
-    rating: 0,
-    numReviews: 0,
-    user: user._id,
-  });
-});
-
-afterAll(async () => {
-  await Cart.deleteMany();
-  await User.deleteMany();
-  await Product.deleteMany();
-});
-
-beforeEach(async () => {
-  await Cart.deleteMany();
-});
+const app = require("../server"); // Adjust the path to your Express app
+const Cart = require("../models/Cart");
+const Product = require("../models/Product");
+const User = require("../models/User");
+const jwt = require("jsonwebtoken");
 
 describe("Cart Routes", () => {
-  it("should add item to cart", async () => {
-    const res = await request(app)
-      .post(`/api/carts/${user._id}/items`)
-      .set("Authorization", `Bearer ${userToken}`)
-      .send({
-        productId: testProduct._id.toString(),
-        quantity: 2,
-      });
+  let token;
+  let userId;
+  let productId;
 
-    expect(res.status).toBe(201);
-    expect(res.body).toHaveProperty("cartItems");
-    expect(res.body.cartItems.length).toBe(1);
-    expect(res.body.cartItems[0].product.toString()).toBe(
-      testProduct._id.toString()
-    );
-    expect(res.body.cartItems[0].quantity).toBe(2);
-  });
-
-  it("should get the cart for a logged-in user", async () => {
-    // Create a cart first to ensure one exists
-    await Cart.create({
-      user: user._id,
-      cartItems: [
-        {
-          product: testProduct._id,
-          name: testProduct.name,
-          price: testProduct.price,
-          image: testProduct.image,
-          quantity: 1,
-        },
-      ],
-      shippingAddress: {
-        address: "123 Test St",
-        city: "Test City",
-        postalCode: "12345",
-        country: "Test Country",
-      },
-      totalPrice: 50,
+  // Setup before all tests
+  beforeAll(async () => {
+    // Connect to the test database
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
 
-    const res = await request(app)
-      .get(`/api/carts/${user._id}`)
-      .set("Authorization", `Bearer ${userToken}`);
+    // Create a test user
+    const user = await User.create({
+      name: "Test User",
+      email: "testuser@example.com",
+      password: "password123",
+      userName: "testuser",
+    });
+    userId = user._id;
 
-    expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("cartItems");
+    // Generate a JWT token for the user
+    token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    // Create a test product
+    const product = await Product.create({
+      user: userId,
+      name: "Test Sunglasses",
+      image: "/test-image.jpg",
+      brand: "Test Brand",
+      category: "Sunglasses",
+      description: "Test description",
+      price: 99.99,
+      countInStock: 10,
+      rating: 4.5,
+      numReviews: 5,
+    });
+    productId = product._id;
   });
 
-  it("should update quantity of an item in the cart", async () => {
-    const cart = await Cart.create({
-      user: user._id,
-      cartItems: [
-        {
-          product: testProduct._id,
-          name: testProduct.name,
-          price: testProduct.price,
-          image: testProduct.image,
+  // Cleanup after all tests
+  afterAll(async () => {
+    // Remove test data
+    await User.deleteMany({});
+    await Product.deleteMany({});
+    await Cart.deleteMany({});
+
+    // Close mongoose connection
+    await mongoose.connection.close();
+  });
+
+  // Reset database between tests
+  beforeEach(async () => {
+    await Cart.deleteMany({});
+  });
+
+  describe("POST /:userId/items - Add Item to Cart", () => {
+    it("should add an item to the cart", async () => {
+      const response = await request(app)
+        .post(`/api/carts/${userId}/items`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          productId: productId,
           quantity: 2,
-        },
-      ],
-      shippingAddress: {
-        address: "123 Test St",
-        city: "Test City",
-        postalCode: "12345",
-        country: "Test Country",
-      },
-      totalPrice: 100,
+        });
+
+      expect(response.statusCode).toBe(201);
+      expect(response.body.cartItems).toHaveLength(1);
+      expect(response.body.cartItems[0].product.toString()).toBe(
+        productId.toString()
+      );
+      expect(response.body.cartItems[0].quantity).toBe(2);
+      expect(response.body.totalPrice).toBe(199.98);
     });
 
-    const itemId = cart.cartItems[0]._id;
-    console.log("Cart created:", cart);
-    console.log("Item ID to update:", itemId);
-    console.log("User ID:", user._id);
+    it("should increase quantity if item already exists in cart", async () => {
+      // First add the item
+      await request(app)
+        .post(`/api/carts/${userId}/items`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          productId: productId,
+          quantity: 2,
+        });
 
-    const res = await request(app)
-      .put(`/api/carts/${user._id}/items/${itemId}`)
-      .set("Authorization", `Bearer ${userToken}`)
-      .send({ quantity: 5 });
+      // Add the same item again
+      const response = await request(app)
+        .post(`/api/carts/${userId}/items`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          productId: productId,
+          quantity: 3,
+        });
 
-    console.log("Update response:", res.status, res.body);
-
-    if (res.status === 404) {
-      // Let's check if the cart actually exists
-      const checkCart = await Cart.findOne({ user: user._id });
-      console.log("Cart check after 404:", checkCart);
-    }
-
-    expect(res.status).toBe(200);
-    expect(res.body.cartItems[0].quantity).toBe(5);
+      expect(response.statusCode).toBe(201);
+      expect(response.body.cartItems).toHaveLength(1);
+      expect(response.body.cartItems[0].quantity).toBe(5);
+      expect(response.body.totalPrice).toBe(499.95);
+    });
   });
 
-  it("should remove an item from the cart", async () => {
-    const cart = await Cart.create({
-      user: user._id,
-      cartItems: [
-        {
-          product: testProduct._id,
-          name: testProduct.name,
-          price: testProduct.price,
-          image: testProduct.image,
-          quantity: 1,
-        },
-      ],
-      shippingAddress: {
-        address: "123 Test St",
-        city: "Test City",
-        postalCode: "12345",
-        country: "Test Country",
-      },
-      totalPrice: 50,
+  describe("GET /:userId - Get User Cart", () => {
+    it("should retrieve user cart", async () => {
+      // First add an item to the cart
+      await request(app)
+        .post(`/api/carts/${userId}/items`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          productId: productId,
+          quantity: 2,
+        });
+
+      // Then get the cart
+      const response = await request(app)
+        .get(`/api/carts/${userId}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.cartItems).toHaveLength(1);
+      expect(response.body.totalPrice).toBe(199.98);
     });
 
-    const itemId = cart.cartItems[0]._id;
-    console.log("Cart created:", cart);
-    console.log("Item ID to remove:", itemId);
-    console.log("User ID:", user._id);
+    it("should return 404 if cart does not exist", async () => {
+      // Use mongoose.Types.ObjectId.createFromHexString to create a valid ObjectId
+      const nonExistentUserId = new mongoose.Types.ObjectId();
+      const response = await request(app)
+        .get(`/api/carts/${nonExistentUserId}`)
+        .set("Authorization", `Bearer ${token}`);
 
-    const res = await request(app)
-      .delete(`/api/carts/${user._id}/items/${itemId}`)
-      .set("Authorization", `Bearer ${userToken}`);
-
-    console.log("Delete response:", res.status, res.body);
-
-    if (res.body.cartItems && res.body.cartItems.length > 0) {
-      console.log("Items still in cart:", res.body.cartItems);
-    }
-
-    expect(res.status).toBe(200);
-    expect(res.body.cartItems.length).toBe(0);
+      expect(response.statusCode).toBe(404);
+    });
   });
 
-  it("should clear the entire cart", async () => {
-    await Cart.create({
-      user: user._id,
-      cartItems: [
-        {
-          product: testProduct._id,
-          name: testProduct.name,
-          price: testProduct.price,
-          image: testProduct.image,
-          quantity: 1,
-        },
-      ],
-      shippingAddress: {
-        address: "123 Test St",
-        city: "Test City",
-        postalCode: "12345",
-        country: "Test Country",
-      },
-      totalPrice: 50,
+  describe("PUT /:userId/items/:itemId - Update Cart Item", () => {
+    it("should update item quantity in cart", async () => {
+      // First add an item to the cart
+      const cartResponse = await request(app)
+        .post(`/api/carts/${userId}/items`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          productId: productId,
+          quantity: 2,
+        });
+
+      const itemId = cartResponse.body.cartItems[0]._id;
+
+      // Update the item quantity
+      const response = await request(app)
+        .put(`/api/carts/${userId}/items/${itemId}`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          quantity: 5,
+        });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.cartItems[0].quantity).toBe(5);
+      expect(response.body.totalPrice).toBe(499.95);
     });
+  });
 
-    const res = await request(app)
-      .delete(`/api/carts/${user._id}`)
-      .set("Authorization", `Bearer ${userToken}`);
+  describe("DELETE /:userId/items/:itemId - Remove Item from Cart", () => {
+    it("should remove an item from the cart", async () => {
+      // First add an item to the cart
+      const cartResponse = await request(app)
+        .post(`/api/carts/${userId}/items`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          productId: productId,
+          quantity: 2,
+        });
 
-    expect(res.status).toBe(200);
+      const itemId = cartResponse.body.cartItems[0]._id;
+
+      // Remove the item
+      const response = await request(app)
+        .delete(`/api/carts/${userId}/items/${itemId}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.cartItems || []).toHaveLength(0);
+      expect(response.body.totalPrice || 0).toBe(0);
+    });
+  });
+
+  describe("DELETE /:userId - Clear Cart", () => {
+    it("should clear the entire cart", async () => {
+      // First add an item to the cart
+      await request(app)
+        .post(`/api/carts/${userId}/items`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          productId: productId,
+          quantity: 2,
+        });
+
+      // Clear the cart
+      const response = await request(app)
+        .delete(`/api/carts/${userId}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.message).toBe("Cart cleared and deleted");
+
+      // Verify cart is actually deleted
+      const cart = await Cart.findOne({ user: userId });
+      expect(cart).toBeNull();
+    });
   });
 });

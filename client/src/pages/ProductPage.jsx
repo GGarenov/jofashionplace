@@ -14,16 +14,27 @@ const ProductPage = () => {
   const [qty, setQty] = useState(1);
 
   const { product, loading, error } = useSelector((state) => state.products);
+  const userId = useSelector((state) => state.user.userInfo?._id);
 
   useEffect(() => {
     dispatch(fetchProductDetails(id));
   }, [dispatch, id]);
 
   const addToCartHandler = () => {
-    dispatch(addToCart({ id, qty }));
-    navigate("/cart");
-  };
+    if (!userId) {
+      console.error("User is not logged in");
+      return;
+    }
 
+    dispatch(addToCart({ id, qty, userId })) // pass userId if needed
+      .unwrap()
+      .then(() => {
+        navigate("/cart");
+      })
+      .catch((error) => {
+        console.error("Failed to add product to cart", error);
+      });
+  };
   return (
     <div className="py-8">
       <button
