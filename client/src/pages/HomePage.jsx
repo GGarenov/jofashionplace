@@ -10,22 +10,33 @@ const HomePage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { products, loading, error } = useSelector((state) => state.products);
+  const { userInfo } = useSelector((state) => state.user);
 
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
   const handleAddToCart = (product) => {
-    // Add the first item to cart by default
+    if (!userInfo) {
+      navigate("/login");
+      return;
+    }
+
     dispatch(
       addToCart({
         id: product._id,
         qty: 1,
+        userId: userInfo._id,
+        token: userInfo.token,
       })
-    );
-
-    // Optional: Show a notification or navigate to cart
-    // navigate('/cart');
+    )
+      .unwrap()
+      .then(() => {
+        navigate("/cart");
+      })
+      .catch((error) => {
+        console.error("Failed to add product to cart", error);
+      });
   };
 
   return (

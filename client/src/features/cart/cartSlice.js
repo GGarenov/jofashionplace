@@ -15,8 +15,7 @@ const initialState = {
 // Async Thunks for async actions
 export const getCart = createAsyncThunk(
   "cart/getCart",
-  async (userId, { getState, rejectWithValue }) => {
-    const token = getState().auth.userInfo?.token; // Changed from state.auth to state.auth.userInfo
+  async ({ userId, token }, { rejectWithValue }) => {
     try {
       const response = await axios.get(`${API_URL}/api/carts/${userId}`, {
         headers: {
@@ -25,40 +24,42 @@ export const getCart = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data.message);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch cart"
+      );
     }
   }
 );
 
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
-  async ({ id, qty, userId }, thunkAPI) => {
-    const state = thunkAPI.getState();
-    const token = state.user.userInfo?.token;
+  async ({ id, qty, userId, token }, { rejectWithValue }) => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      };
 
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    };
-
-    const response = await axios.post(
-      `${API_URL}/api/carts/${userId}/items`,
-      { productId: id, quantity: qty },
-      config
-    );
-    return response.data;
+      const response = await axios.post(
+        `${API_URL}/api/carts/${userId}/items`,
+        { productId: id, quantity: qty },
+        config
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to add item to cart"
+      );
+    }
   }
 );
 
 export const removeItem = createAsyncThunk(
   "cart/removeItem",
-  async ({ userId, itemId }, thunkAPI) => {
+  async ({ userId, itemId, token }, { rejectWithValue }) => {
     try {
-      const state = thunkAPI.getState();
-      const token = state.auth.userInfo?.token; // Changed from state.user to state.auth
-
       if (!token) {
         throw new Error("No authentication token found");
       }
@@ -71,16 +72,9 @@ export const removeItem = createAsyncThunk(
       return itemId; // Return the itemId to remove it from the state
     } catch (error) {
       console.error("Remove item error:", error);
-
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        return thunkAPI.rejectWithValue(error.response.data.message);
-      }
-
-      return thunkAPI.rejectWithValue(error.message || "Failed to remove item");
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to remove item"
+      );
     }
   }
 );
@@ -100,7 +94,9 @@ export const updateItemQuantity = createAsyncThunk(
       );
       return response.data; // Return updated cart
     } catch (error) {
-      return rejectWithValue(error.response.data.message);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update item quantity"
+      );
     }
   }
 );
@@ -116,7 +112,9 @@ export const clearCart = createAsyncThunk(
       });
       return null; // Return null since the cart is cleared
     } catch (error) {
-      return rejectWithValue(error.response.data.message);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to clear cart"
+      );
     }
   }
 );
@@ -131,6 +129,7 @@ const cartSlice = createSlice({
       // Get Cart
       .addCase(getCart.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(getCart.fulfilled, (state, action) => {
         state.loading = false;
@@ -145,6 +144,7 @@ const cartSlice = createSlice({
       // Add To Cart
       .addCase(addToCart.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(addToCart.fulfilled, (state, action) => {
         state.loading = false;
@@ -159,6 +159,7 @@ const cartSlice = createSlice({
       // Remove Item
       .addCase(removeItem.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(removeItem.fulfilled, (state, action) => {
         state.loading = false;
@@ -174,6 +175,7 @@ const cartSlice = createSlice({
       // Update Item Quantity
       .addCase(updateItemQuantity.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(updateItemQuantity.fulfilled, (state, action) => {
         state.loading = false;
@@ -188,6 +190,7 @@ const cartSlice = createSlice({
       // Clear Cart
       .addCase(clearCart.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(clearCart.fulfilled, (state) => {
         state.loading = false;

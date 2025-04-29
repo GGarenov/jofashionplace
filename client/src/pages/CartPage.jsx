@@ -12,32 +12,59 @@ const CartPage = () => {
   const { cartItems, totalPrice, loading, error } = useSelector(
     (state) => state.cart
   );
-  const token = localStorage.getItem("token"); // Assuming you store JWT token in localStorage
+
+  // Get user info from Redux state
+  const { userInfo } = useSelector((state) => state.user); // Assuming your user slice is named 'user'
 
   // Fetch cart when component mounts
   useEffect(() => {
-    const userId = "USER_ID"; // Replace with actual user ID
-    if (token) {
-      dispatch(getCart(userId, token));
+    if (userInfo && userInfo._id && userInfo.token) {
+      dispatch(
+        getCart({
+          userId: userInfo._id,
+          token: userInfo.token,
+        })
+      );
     }
-  }, [dispatch, token]);
+  }, [dispatch, userInfo]);
 
   // Handle remove item from cart
   const handleRemoveItem = (itemId) => {
-    const userId = "USER_ID"; // Replace with actual user ID
-    dispatch(removeItem({ userId, itemId, token }));
+    if (userInfo && userInfo._id && userInfo.token) {
+      dispatch(
+        removeItem({
+          userId: userInfo._id,
+          itemId,
+          token: userInfo.token,
+        })
+      );
+    }
   };
 
   // Handle update item quantity
   const handleUpdateQuantity = (itemId, quantity) => {
-    const userId = "USER_ID"; // Replace with actual user ID
-    dispatch(updateItemQuantity({ userId, itemId, quantity, token }));
+    if (userInfo && userInfo._id && userInfo.token) {
+      dispatch(
+        updateItemQuantity({
+          userId: userInfo._id,
+          itemId,
+          quantity,
+          token: userInfo.token,
+        })
+      );
+    }
   };
 
   // Handle clear cart
   const handleClearCart = () => {
-    const userId = "USER_ID"; // Replace with actual user ID
-    dispatch(clearCart({ userId, token }));
+    if (userInfo && userInfo._id && userInfo.token) {
+      dispatch(
+        clearCart({
+          userId: userInfo._id,
+          token: userInfo.token,
+        })
+      );
+    }
   };
 
   if (loading) return <div>Loading...</div>;
@@ -76,7 +103,7 @@ const CartPage = () => {
                   min="1"
                   className="w-16 p-2 border rounded"
                   onChange={(e) =>
-                    handleUpdateQuantity(item._id, e.target.value)
+                    handleUpdateQuantity(item._id, parseInt(e.target.value))
                   }
                 />
                 <button

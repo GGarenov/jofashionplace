@@ -14,19 +14,26 @@ const ProductPage = () => {
   const [qty, setQty] = useState(1);
 
   const { product, loading, error } = useSelector((state) => state.products);
-  const userId = useSelector((state) => state.user.userInfo?._id);
+  const { userInfo } = useSelector((state) => state.user);
 
   useEffect(() => {
     dispatch(fetchProductDetails(id));
   }, [dispatch, id]);
 
   const addToCartHandler = () => {
-    if (!userId) {
-      console.error("User is not logged in");
+    if (!userInfo) {
+      navigate("/login");
       return;
     }
 
-    dispatch(addToCart({ id, qty, userId })) // pass userId if needed
+    dispatch(
+      addToCart({
+        id,
+        qty,
+        userId: userInfo._id,
+        token: userInfo.token,
+      })
+    )
       .unwrap()
       .then(() => {
         navigate("/cart");
